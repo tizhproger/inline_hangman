@@ -124,6 +124,7 @@ def hangman_buttons(call):
             if hangs[game_id]['keyboard'] > 0:
                 hangs[game_id]['keyboard'] -= 1
                 word, takes, keyboard_pos, guessed, eng = game_info(game_id, 'all', True)
+                player = hangs[game_id]['player']
                 bot.edit_message_text(inline_message_id=call.inline_message_id,
                                       text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={player}">🙎🏻‍♂️{player_name}</a>',
                                       reply_markup=view_buttons(keyboard_pos, game_id, eng), parse_mode='html')
@@ -140,6 +141,7 @@ def hangman_buttons(call):
             if (hangs[game_id]['eng'] and hangs[game_id]['keyboard'] < 3) or (not hangs[game_id]['eng'] and hangs[game_id]['keyboard'] < 4):
                 hangs[game_id]['keyboard'] += 1
                 word, takes, keyboard_pos, guessed, eng = game_info(game_id, 'all', True)
+                player = hangs[game_id]['player']
                 bot.edit_message_text(inline_message_id=call.inline_message_id,
                                       text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={player}">🙎🏻‍♂️{player_name}</a>',
                                       reply_markup=view_buttons(keyboard_pos, game_id, eng), parse_mode='html')
@@ -178,6 +180,7 @@ def hangman_buttons(call):
                     return
                 guessed += letter
                 word = re.sub(f'[^{guessed}]', '*', word)
+                player = hangs[game_id]['player']
                 bot.edit_message_text(inline_message_id=call.inline_message_id,
                                       text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={player}">🙎🏻‍♂️{player_name}</a>',
                                       reply_markup=view_buttons(keyboard_pos, game_id, eng), parse_mode='html')
@@ -187,6 +190,7 @@ def hangman_buttons(call):
             else:
                 takes += 1
                 word = re.sub(f'[^{guessed}]', '*', word)
+                player = hangs[game_id]['player']
                 bot.edit_message_text(inline_message_id=call.inline_message_id,
                                       text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={player}">🙎🏻‍♂️{player_name}</a>',
                                       reply_markup=view_buttons(keyboard_pos, game_id, eng), parse_mode='html')
