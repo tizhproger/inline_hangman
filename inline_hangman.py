@@ -28,8 +28,9 @@ def view_buttons(position, id, eng):
                 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Щ', 'Ъ', 'Ы', 'Ь', 'Э', 'Ю', 'Я']
     tst = []
     tst2 = []
+    tst3 = []
     end = 0
-    letters_num = 8
+    letters_num = 12
     view_keyboard = 0
     start = letters_num * position
 
@@ -41,10 +42,12 @@ def view_buttons(position, id, eng):
     for numb in range(start, end):
         if numb < (start+4):
             tst.append(telebot.types.InlineKeyboardButton(text=names[numb], callback_data='hangman=letter=' + id + '=' + names[numb].lower()))
-        else:
+        elif numb < (start+8):
             tst2.append(telebot.types.InlineKeyboardButton(text=names[numb], callback_data='hangman=letter=' + id + '=' + names[numb].lower()))
+        else:
+            tst3.append(telebot.types.InlineKeyboardButton(text=names[numb], callback_data='hangman=letter=' + id + '=' + names[numb].lower()))
     
-    view_keyboard = telebot.types.InlineKeyboardMarkup(keyboard=[tst, tst2], row_width=4)
+    view_keyboard = telebot.types.InlineKeyboardMarkup(keyboard=[tst, tst2, tst3], row_width=4)
 
     view_keyboard.row(telebot.types.InlineKeyboardButton(text='<< Prev', callback_data='hangman=letter_prev=' + id),
                       telebot.types.InlineKeyboardButton(text='Next >>', callback_data='hangman=letter_next=' + id))
@@ -124,10 +127,10 @@ def hangman_buttons(call):
             if hangs[game_id]['keyboard'] > 0:
                 hangs[game_id]['keyboard'] -= 1
                 word, takes, keyboard_pos, guessed, eng = game_info(game_id, 'all', True)
-                player = hangs[game_id]['player']
                 bot.edit_message_text(inline_message_id=call.inline_message_id,
-                                      text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={player}">🙎🏻‍♂️{player_name}</a>',
-                                      reply_markup=view_buttons(keyboard_pos, game_id, eng), parse_mode='html')
+                    text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={call.from_user.id}">🙎🏻‍♂️{call.from_user.first_name}</a>',
+                    reply_markup=view_buttons(keyboard_pos, game_id, eng),
+                    parse_mode='html')
                 bot.answer_callback_query(call.id)
             else:
                 bot.answer_callback_query(call.id)
@@ -138,13 +141,13 @@ def hangman_buttons(call):
                 bot.answer_callback_query(call.id, "Это не твоя игра, бро!")
                 return
 
-            if (hangs[game_id]['eng'] and hangs[game_id]['keyboard'] < 3) or (not hangs[game_id]['eng'] and hangs[game_id]['keyboard'] < 4):
+            if (hangs[game_id]['eng'] and hangs[game_id]['keyboard'] < 2) or (not hangs[game_id]['eng'] and hangs[game_id]['keyboard'] < 2):
                 hangs[game_id]['keyboard'] += 1
                 word, takes, keyboard_pos, guessed, eng = game_info(game_id, 'all', True)
-                player = hangs[game_id]['player']
                 bot.edit_message_text(inline_message_id=call.inline_message_id,
-                                      text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={player}">🙎🏻‍♂️{player_name}</a>',
-                                      reply_markup=view_buttons(keyboard_pos, game_id, eng), parse_mode='html')
+                    text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={call.from_user.id}">🙎🏻‍♂️{call.from_user.first_name}</a>',
+                    reply_markup=view_buttons(keyboard_pos, game_id, eng),
+                    parse_mode='html')
                 bot.answer_callback_query(call.id)
             else:
                 bot.answer_callback_query(call.id)
@@ -156,13 +159,11 @@ def hangman_buttons(call):
                 return
 
             hangs[game_id]['player'] = str(call.from_user.id)
-            english_mode = hangs[game_id]['eng']
-            word, takes, keyboard_pos, guessed, eng = game_info(game_id, 'all')
-            letter = data[3]
-            player = hangs[game_id]['player']
+            word, takes, keyboard_pos, guessed, eng = game_info(game_id, 'all', True)
             bot.edit_message_text(inline_message_id=call.inline_message_id,
-                                  text=stages[0] + '\n📝' + re.sub('\w', '*', word) + '\n🔄0/6\n<a href="tg://user?id={player}">🙎🏻‍♂️{player_name}</a>',
-                                  reply_markup=view_buttons(0, game_id, english_mode), parse_mode='html')
+                    text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={call.from_user.id}">🙎🏻‍♂️{call.from_user.first_name}</a>',
+                    reply_markup=view_buttons(keyboard_pos, game_id, eng),
+                    parse_mode='html')
             bot.answer_callback_query(call.id, 'Добро пожаловать в игру!')
             return
 
@@ -174,26 +175,27 @@ def hangman_buttons(call):
             word, takes, keyboard_pos, guessed, eng = game_info(game_id, 'all')
             letter = data[3]
 
+
             if re.search(f'[{letter}]', word):
                 if letter in hangs[game_id]['guessed']:
                     bot.answer_callback_query(call.id, 'Эту букву уже выбирали!')
                     return
                 guessed += letter
                 word = re.sub(f'[^{guessed}]', '*', word)
-                player = hangs[game_id]['player']
                 bot.edit_message_text(inline_message_id=call.inline_message_id,
-                                      text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={player}">🙎🏻‍♂️{player_name}</a>',
-                                      reply_markup=view_buttons(keyboard_pos, game_id, eng), parse_mode='html')
+                    text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={call.from_user.id}">🙎🏻‍♂️{call.from_user.first_name}</a>',
+                    reply_markup=view_buttons(keyboard_pos, game_id, eng),
+                    parse_mode='html')
                 hangs[game_id]['guessed'] = guessed
                 bot.answer_callback_query(call.id)
 
             else:
                 takes += 1
                 word = re.sub(f'[^{guessed}]', '*', word)
-                player = hangs[game_id]['player']
                 bot.edit_message_text(inline_message_id=call.inline_message_id,
-                                      text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={player}">🙎🏻‍♂️{player_name}</a>',
-                                      reply_markup=view_buttons(keyboard_pos, game_id, eng), parse_mode='html')
+                    text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={call.from_user.id}">🙎🏻‍♂️{call.from_user.first_name}</a>',
+                    reply_markup=view_buttons(keyboard_pos, game_id, eng),
+                    parse_mode='html')
                 hangs[game_id]['takes'] = takes
                 bot.answer_callback_query(call.id, 'Неа, не то...')
             
@@ -202,8 +204,9 @@ def hangman_buttons(call):
                 word, takes, keyboard_pos, guessed, eng = game_info(game_id, 'all', True)
                 player = hangs[game_id]['player']
                 bot.edit_message_text(inline_message_id=call.inline_message_id,
-                                      text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={player}">🙎🏻‍♂️{player_name}</a> остался жив, награда: <i>ничего</i>',
-                                      reply_markup=None, parse_mode='html')
+                    text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={call.from_user.id}">🙎🏻‍♂️{call.from_user.first_name}</a> остался жив, награда: <i>ничего</i>',
+                    reply_markup=None,
+                    parse_mode='html')
                 bot.answer_callback_query(call.id, 'Ты выиграл!')
                 return
             
@@ -211,8 +214,9 @@ def hangman_buttons(call):
                 word, takes, keyboard_pos, guessed, eng = game_info(game_id, 'all')
                 player = hangs[game_id]['player']
                 bot.edit_message_text(inline_message_id=call.inline_message_id,
-                                      text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={player}">{player_name}</a> повесился.',
-                                      reply_markup=None, parse_mode='html')
+                    text=stages[takes] + f'\n📝{word}\n🔄{takes}/6\n<a href="tg://user?id={call.from_user.id}">{call.from_user.first_name}</a> повесился.',
+                    reply_markup=None,
+                    parse_mode='html')
                 bot.answer_callback_query(call.id, 'Ты проиграл!')
                 return
     except:
